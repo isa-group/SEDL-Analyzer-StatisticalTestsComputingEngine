@@ -38,18 +38,7 @@
 			<artifactId>SEDLAnalyzer</artifactId>
 			<version>${sedl.version}</version>
 			<type>jar</type>
-		</dependency>
-		<dependency>
-			<groupId>es.us.isa.sedl.sedl4people</groupId>
-			<artifactId>SEDL4People-Language</artifactId>
-			<version>${project.version}</version>
-		 <exclusions>
-		  <exclusion>
-		   <groupId>org.springframework</groupId>
-		   <artifactId>spring-context</artifactId>
-		  </exclusion>
-		 </exclusions>
-		</dependency>
+		</dependency>		
 		
 		<dependency>
                      <groupId>es.us.lsi.isa</groupId>
