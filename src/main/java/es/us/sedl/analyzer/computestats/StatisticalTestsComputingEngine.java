@@ -31,9 +31,9 @@ import es.us.isa.sedl.analysis.operations.information.computestats.StatisticalAn
 import es.us.isa.sedl.analysis.operations.information.computestats.StatisticsComputingEngine;
 import es.us.isa.sedl.analysis.operations.information.computestats.UnsupportedStatisticException;
 import es.us.isa.sedl.analysis.operations.information.computestats.engine.StatisticComputingEnginePlugin;
-import es.us.isa.sedl.core.BasicExperiment;
+import es.us.isa.sedl.core.ControlledExperiment;
 import es.us.isa.sedl.core.util.Error;
-import es.us.isa.sedl.core.analysis.statistic.NHST;
+import es.us.isa.sedl.core.analysis.statistic.Nhst;
 import es.us.isa.sedl.core.analysis.statistic.Statistic;
 import es.us.isa.sedl.core.analysis.statistic.StatisticalAnalysisResult;
 import java.util.ArrayList;
@@ -66,8 +66,8 @@ public class StatisticalTestsComputingEngine implements StatisticComputingEngine
 
     @Override
     public boolean isSupported(Statistic s) {
-        if (s instanceof NHST) {
-            NHST nhst = (NHST) s;
+        if (s instanceof Nhst) {
+            Nhst nhst = (Nhst) s;
             for (String supportedTest : supportedTests) {
                 if (nhst.getName().equalsIgnoreCase(supportedTest)) {
                     return true;
@@ -80,7 +80,7 @@ public class StatisticalTestsComputingEngine implements StatisticComputingEngine
     @Override
     public List<StatisticalAnalysisResult> compute(StatisticalAnalysisOperation operation) throws UnsupportedStatisticException {
         List<StatisticalAnalysisResult> result = Collections.EMPTY_LIST;
-        NHST test = (NHST) operation.getStatistic();
+        Nhst test = (Nhst) operation.getStatistic();
         String testName = test.getName();
 
         if (token(T_STUDENT).equalsIgnoreCase(testName)) {
@@ -103,7 +103,7 @@ public class StatisticalTestsComputingEngine implements StatisticComputingEngine
         return result;
     }
 
-    private List<StatisticalAnalysisResult> computeTStudent(StatisticalAnalysisOperation operation, NHST test) {
+    private List<StatisticalAnalysisResult> computeTStudent(StatisticalAnalysisOperation operation, Nhst test) {
         List<StatisticalAnalysisResult> result = new ArrayList<StatisticalAnalysisResult>();
         StatisticalTestInput s = new StatisticalTestInput();
         DataSet dataset = generateDatasetContent(operation.getDataset(), ROW_SEPARATOR, COLUMN_SEPARATOR);
@@ -113,7 +113,7 @@ public class StatisticalTestsComputingEngine implements StatisticComputingEngine
             StatisticalTestResult str = pscs.tTest(s);
             extractOutput(str, operation, test, result);
         } catch (TTestFault e) {
-            ValidationError<BasicExperiment> ve = new ValidationError<BasicExperiment>(null, Error.ERROR_SEVERITY.ERROR, "[ERROR] T-Student operation not support datasets with more than two variables");
+            ValidationError<ControlledExperiment> ve = new ValidationError<ControlledExperiment>(null, Error.ERROR_SEVERITY.ERROR, "[ERROR] T-Student operation not support datasets with more than two variables");
             operation.getErrors().add(ve);
             e.printStackTrace();
         }
@@ -132,7 +132,7 @@ public class StatisticalTestsComputingEngine implements StatisticComputingEngine
         return result;
     }
 
-    private List<StatisticalAnalysisResult> computeANOVA(StatisticalAnalysisOperation operation, NHST test) {
+    private List<StatisticalAnalysisResult> computeANOVA(StatisticalAnalysisOperation operation, Nhst test) {
         List<StatisticalAnalysisResult> result = new ArrayList<StatisticalAnalysisResult>();
         DataSet dataset = generateDatasetContent(operation.getDataset(), ROW_SEPARATOR, COLUMN_SEPARATOR);
         ParametricMultipleComparisonInput input = new ParametricMultipleComparisonInput();
@@ -144,14 +144,14 @@ public class StatisticalTestsComputingEngine implements StatisticComputingEngine
             StatisticalTestResult str = pmcs.anova(input);
             extractOutput(str, operation, test, result);
         } catch (ANOVAFault e) {
-            ValidationError<BasicExperiment> ve = new ValidationError<BasicExperiment>(null, Error.ERROR_SEVERITY.ERROR, "[ERROR] " + e.getMessage());
+            ValidationError<ControlledExperiment> ve = new ValidationError<ControlledExperiment>(null, Error.ERROR_SEVERITY.ERROR, "[ERROR] " + e.getMessage());
             operation.getErrors().add(ve);
             e.printStackTrace();
         }
         return result;
     }
 
-    private List<StatisticalAnalysisResult> computeWILCOXON(StatisticalAnalysisOperation operation, NHST test) {
+    private List<StatisticalAnalysisResult> computeWILCOXON(StatisticalAnalysisOperation operation, Nhst test) {
 
         List<StatisticalAnalysisResult> result = new ArrayList<StatisticalAnalysisResult>();
         DataSet dataset = generateDatasetContent(operation.getDataset(), ROW_SEPARATOR, COLUMN_SEPARATOR);
@@ -169,7 +169,7 @@ public class StatisticalTestsComputingEngine implements StatisticComputingEngine
         return result;
     }
 
-    private List<StatisticalAnalysisResult> computeFRIEDMAN(StatisticalAnalysisOperation operation, NHST test) {
+    private List<StatisticalAnalysisResult> computeFRIEDMAN(StatisticalAnalysisOperation operation, Nhst test) {
         List<StatisticalAnalysisResult> result = new ArrayList<StatisticalAnalysisResult>();
         DataSet dataset = generateDatasetContent(operation.getDataset(), ROW_SEPARATOR, COLUMN_SEPARATOR);
         NonParametricMultipleComparisonInput input = new NonParametricMultipleComparisonInput();
@@ -186,20 +186,20 @@ public class StatisticalTestsComputingEngine implements StatisticComputingEngine
         return result;
     }
 
-    private void extractOutput(StatisticalTestResult str, StatisticalAnalysisOperation operation, NHST test, List<StatisticalAnalysisResult> result) {
+    private void extractOutput(StatisticalTestResult str, StatisticalAnalysisOperation operation, Nhst test, List<StatisticalAnalysisResult> result) {
         es.us.isa.sedl.core.analysis.statistic.PValue pvalue = null;
         List<PValue> values = str.getSignificanceResult().getPvalues();
         for (PValue pv : values) {
             pvalue = new es.us.isa.sedl.core.analysis.statistic.PValue();
             pvalue.setValue(pv.getValue());
             pvalue.setSignificanceThreshold(test.getAlpha());
-            pvalue.setNHST(((NHST) operation.getStatistic()).getName());
+            pvalue.setNhst(((Nhst) operation.getStatistic()).getName());
             pvalue.setDatasetSpecification(operation.getStatistic().getDatasetSpecification());
             result.add(pvalue);
         }
     }
 
-    private List<StatisticalAnalysisResult> computeKOLMOGORV_SMIRNOV(StatisticalAnalysisOperation operation, NHST test) {
+    private List<StatisticalAnalysisResult> computeKOLMOGORV_SMIRNOV(StatisticalAnalysisOperation operation, Nhst test) {
         List<StatisticalAnalysisResult> result = new ArrayList<StatisticalAnalysisResult>();
         DataSet dataset = generateDatasetContent(operation.getDataset(), ROW_SEPARATOR, COLUMN_SEPARATOR);
         NonParametricMultipleComparisonInput input = new NonParametricMultipleComparisonInput();
@@ -216,7 +216,7 @@ public class StatisticalTestsComputingEngine implements StatisticComputingEngine
         return result;
     }
 
-    private List<StatisticalAnalysisResult> computeLEVENE(StatisticalAnalysisOperation operation, NHST test) {
+    private List<StatisticalAnalysisResult> computeLEVENE(StatisticalAnalysisOperation operation, Nhst test) {
          List<StatisticalAnalysisResult> result = new ArrayList<StatisticalAnalysisResult>();
         DataSet dataset = generateDatasetContent(operation.getDataset(), ROW_SEPARATOR, COLUMN_SEPARATOR);
         StatisticalTestInput input = new StatisticalTestInput();
@@ -232,7 +232,7 @@ public class StatisticalTestsComputingEngine implements StatisticComputingEngine
         return result;
     }
 
-    private List<StatisticalAnalysisResult> computeSHAPIRO_WILK(StatisticalAnalysisOperation operation, NHST test) {
+    private List<StatisticalAnalysisResult> computeSHAPIRO_WILK(StatisticalAnalysisOperation operation, Nhst test) {
         List<StatisticalAnalysisResult> result = new ArrayList<StatisticalAnalysisResult>();
         DataSet dataset = generateDatasetContent(operation.getDataset(), ROW_SEPARATOR, COLUMN_SEPARATOR);
         NonParametricMultipleComparisonInput input = new NonParametricMultipleComparisonInput();
@@ -251,7 +251,7 @@ public class StatisticalTestsComputingEngine implements StatisticComputingEngine
 
     @Override
     public Class<? extends Statistic> supportedStatistic() {
-        return NHST.class;
+        return Nhst.class;
     }
 
 }
